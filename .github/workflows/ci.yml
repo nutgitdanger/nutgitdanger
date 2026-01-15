@@ -1,12 +1,39 @@
-name: CI Test
+name: CI Network Test
 
 on:
   push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  test:
+  network-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "GitHub Actions is working"
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: System info
+        run: |
+          uname -a
+          ip a
+          resolvectl status
+
+      - name: DNS resolve test
+        run: |
+          time getent hosts google.com
+          time getent hosts github.com
+          time getent hosts cloudflare.com
+
+      - name: Ping test
+        run: |
+          ping -c 5 1.1.1.1
+          ping -c 5 8.8.8.8
+
+      - name: HTTP latency test
+        run: |
+          curl -o /dev/null -s -w "google.com: %{time_total}s\n" https://google.com
+          curl -o /dev/null -s -w "github.com: %{time_total}s\n" https://github.com
+
+      - name: Download speed test (100MB)
+        run: |
+          curl -L -o /dev/null https://speed.hetzner.de/100MB.bin
